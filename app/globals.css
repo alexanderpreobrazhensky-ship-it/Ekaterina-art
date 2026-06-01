@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: Inter, system-ui, sans-serif;
+  --font-serif: Georgia, serif;
+  color: #292724;
+  background: #f8f3ea;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(200, 164, 93, 0.18), transparent 30rem),
+    linear-gradient(180deg, #fffdf8 0%, #f8f3ea 48%, #efe3d0 100%);
+}
+
+a {
+  text-decoration: none;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(216, 196, 165, 0.8);
+  background: rgba(255, 253, 248, 0.9);
+  padding: 0.85rem 1rem;
+  color: #292724;
+  outline: none;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #c8a45d;
+  box-shadow: 0 0 0 3px rgba(200, 164, 93, 0.14);
+}
+
+label {
+  color: rgba(41, 39, 36, 0.76);
+  font-size: 0.9rem;
+}
