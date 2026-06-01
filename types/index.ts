@@ -17,13 +17,15 @@ export type PortfolioCategory =
   | "Объёмные картины"
   | "Декор для бизнеса";
 
+export type PreferredContact = "Telegram" | "WhatsApp" | "Телефон" | "Email";
+
 export interface UserProfile {
   id: string;
   fullName: string;
   email: string;
   phone: string;
   city: string;
-  preferredContact: "Telegram" | "WhatsApp" | "Телефон" | "Email";
+  preferredContact: PreferredContact;
 }
 
 export interface PortfolioItem {
