@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, MouseEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -8,6 +8,14 @@ import { Section } from "@/components/ui/Section";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 
 type AuthMode = "password" | "magic" | "phone-ready";
+
+function getReadableAuthError(error: unknown) {
+  if (error instanceof Error) {
+    return `Не удалось выполнить запрос: ${error.message}`;
+  }
+
+  return "Не удалось выполнить запрос. Проверьте данные и попробуйте снова.";
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,35 +28,69 @@ export default function LoginPage() {
     setIsLoading(true);
     setMessage("");
 
-    const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") || "").trim();
-    const password = String(formData.get("password") || "");
-    const supabase = getSupabaseBrowserClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const formData = new FormData(event.currentTarget);
+      const email = String(formData.get("email") || "").trim();
+      const password = String(formData.get("password") || "");
 
-    setIsLoading(false);
+      if (!email || !password) {
+        setMessage("Заполните email и пароль.");
+        return;
+      }
 
-    if (error) {
-      setMessage(error.message);
-      return;
+      const supabase = getSupabaseBrowserClient();
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        setMessage(error.message);
+        return;
+      }
+
+      router.push("/account");
+      router.refresh();
+    } catch (error) {
+      setMessage(getReadableAuthError(error));
+    } finally {
+      setIsLoading(false);
     }
-
-    router.push("/account");
-    router.refresh();
   }
 
-  async function handleSignUp(form: HTMLFormElement) {
+  async function handleSignUp(event: MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
     setIsLoading(true);
     setMessage("");
 
-    const formData = new FormData(form);
-    const email = String(formData.get("email") || "").trim();
-    const password = String(formData.get("password") || "");
-    const supabase = getSupabaseBrowserClient();
-    const { error } = await supabase.auth.signUp({ email, password });
+    try {
+      const form = event.currentTarget.form;
 
-    setIsLoading(false);
-    setMessage(error ? error.message : "Регистрация создана. Проверьте email, если в Supabase включено подтверждение почты.");
+      if (!form) {
+        setMessage("Не удалось прочитать форму регистрации. Попробуйте еще раз.");
+        return;
+      }
+
+      const formData = new FormData(form);
+      const email = String(formData.get("email") || "").trim();
+      const password = String(formData.get("password") || "");
+
+      if (!email || !password) {
+        setMessage("Заполните email и пароль.");
+        return;
+      }
+
+      const supabase = getSupabaseBrowserClient();
+      const { error } = await supabase.auth.signUp({ email, password });
+
+      if (error) {
+        setMessage(error.message);
+        return;
+      }
+
+      setMessage("Регистрация создана. Проверьте email или войдите, если подтверждение email отключено.");
+    } catch (error) {
+      setMessage(getReadableAuthError(error));
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   async function handleMagicLinkSubmit(event: FormEvent<HTMLFormElement>) {
@@ -56,18 +98,34 @@ export default function LoginPage() {
     setIsLoading(true);
     setMessage("");
 
-    const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") || "").trim();
-    const supabase = getSupabaseBrowserClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/account`,
-      },
-    });
+    try {
+      const formData = new FormData(event.currentTarget);
+      const email = String(formData.get("email") || "").trim();
 
-    setIsLoading(false);
-    setMessage(error ? error.message : "Magic link отправлен. Откройте письмо и вернитесь в личный кабинет.");
+      if (!email) {
+        setMessage("Заполните email.");
+        return;
+      }
+
+      const supabase = getSupabaseBrowserClient();
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/account`,
+        },
+      });
+
+      if (error) {
+        setMessage(error.message);
+        return;
+      }
+
+      setMessage("Magic link отправлен. Откройте письмо и вернитесь в личный кабинет.");
+    } catch (error) {
+      setMessage(getReadableAuthError(error));
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -89,7 +147,7 @@ export default function LoginPage() {
             <label>Пароль<input name="password" type="password" placeholder="••••••••" minLength={6} required /></label>
             <div className="grid gap-3 sm:grid-cols-2">
               <Button type="submit" disabled={isLoading}>{isLoading ? "Проверяем..." : "Войти"}</Button>
-              <Button type="button" variant="secondary" disabled={isLoading} onClick={(event) => event.currentTarget.form && handleSignUp(event.currentTarget.form)}>Зарегистрироваться</Button>
+              <Button type="button" variant="secondary" disabled={isLoading} onClick={handleSignUp}>Зарегистрироваться</Button>
             </div>
           </form>
         ) : null}
